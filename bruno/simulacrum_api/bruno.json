@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "simulacrum",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

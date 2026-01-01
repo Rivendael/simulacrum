@@ -1,0 +1,21 @@
+# Build artifacts
+server
+simulacrum
+generate-keys
+generate-certs
+generate-bulk-test
+*.exe
+*.test
+*.out
+
+# Keys and secrets (never bake these into the image)
+test_token.txt
+.env
+.env.local
+
+# Dependencies and IDEs
+vendor/
+.git/
+.vscode/
+.idea/
+bruno/

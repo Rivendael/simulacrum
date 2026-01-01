@@ -1,0 +1,26 @@
+meta {
+  name: Generic - Arbitrary JSON Structure
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{url}}/obscure
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "user_001",
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "custom_field_1": "not_obscured",
+    "custom_field_2": 123,
+    "nested_unknown": {
+      "field_a": "value_a",
+      "field_b": 456
+    },
+    "tags": ["tag1", "tag2", "tag3"]
+  }
+}

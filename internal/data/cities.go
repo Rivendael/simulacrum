@@ -1,0 +1,32 @@
+package data
+
+// CityNames contains a list of city names for generating deterministic addresses
+var CityNames = []string{
+	"New York", "Los Angeles", "Chicago", "Houston", "Phoenix",
+	"Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
+	"Austin", "Jacksonville", "Fort Worth", "Columbus", "Indianapolis",
+	"Charlotte", "San Francisco", "Seattle", "Denver", "Boston",
+	"Memphis", "Nashville", "Detroit", "Oklahoma City", "Portland",
+	"Las Vegas", "Louisville", "Baltimore", "Milwaukee", "Albuquerque",
+	"Tucson", "Fresno", "Long Beach", "Kansas City", "Mesa",
+	"Atlanta", "Miami", "Arlington", "New Orleans", "Bakersfield",
+	"Tampa", "Aurora", "Anaheim", "Santa Ana", "Riverside",
+	"Corpus Christi", "Lexington", "Henderson", "Plano", "Stockton",
+	"St. Louis", "Cincinnati", "Irvine", "Pittsburgh", "Arlington",
+	"Chula Vista", "Cleveland", "Garland", "Irving", "Scottsdale",
+	"North Las Vegas", "Winston-Salem", "Glendale", "Chesapeake", "Gilbert",
+	"Laredo", "Madison", "Montgomery", "Lubbock", "Akron",
+	"Augusta", "Vancouver", "Toronto", "Mexico City", "Montreal",
+	"Vancouver", "Mexico City", "Guadalajara", "Cancun", "Monterrey",
+	"Paris", "London", "Berlin", "Madrid", "Rome",
+	"Amsterdam", "Vienna", "Brussels", "Prague", "Budapest",
+	"Warsaw", "Athens", "Helsinki", "Dublin", "Stockholm",
+	"Copenhagen", "Zurich", "Geneva", "Lisbon", "Barcelona",
+	"Munich", "Hamburg", "Cologne", "Frankfurt", "Stuttgart",
+	"Düsseldorf", "Bremen", "Hannover", "Nuremberg", "Munich",
+	"Tokyo", "Beijing", "Shanghai", "Hong Kong", "Singapore",
+	"Bangkok", "Seoul", "Manila", "Jakarta", "Bangalore",
+	"Mumbai", "Delhi", "Kolkata", "Chennai", "Hyderabad",
+	"Dubai", "Abu Dhabi", "Cairo", "Johannesburg", "Sydney",
+	"Melbourne", "Auckland", "Wellington", "Brisbane", "Perth",
+}

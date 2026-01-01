@@ -1,0 +1,56 @@
+meta {
+  name: Generic - Complete Profile
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{url}}/obscure
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "complete_user_001",
+    "first_name": "Christopher",
+    "last_name": "Anderson",
+    "middle_name": "James",
+    "email": "chris.anderson@example.com",
+    "phone_number": "555-246-8135",
+    "address": "789 Oak Avenue, Denver, CO 80202",
+    "street": "Oak Avenue",
+    "city": "Denver",
+    "state": "CO",
+    "zip_code": "80202",
+    "county": "Denver",
+    "country": "USA",
+    "date_of_birth": "1978-11-22",
+    "gender": "Male",
+    "ssn": "456-78-9012",
+    "tax_id": "45-6789012",
+    "integer_value": 987654,
+    "float_value": 98765.43,
+    "passport": {
+      "number": "EF5678901",
+      "issue_date": "2017-08-15",
+      "expiration_date": "2027-08-15"
+    },
+    "driver_license": {
+      "number": "CO987654321",
+      "state": "Colorado",
+      "issue_date": "2019-05-10",
+      "expiration_date": "2027-05-10"
+    },
+    "bank_accounts": [
+      {
+        "name": "Business Checking",
+        "amount": "50000.00"
+      },
+      {
+        "name": "Emergency Fund",
+        "amount": "25000.00"
+      }
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+meta {
+  name: Generic - Bank Accounts
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{url}}/obscure
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "bank_user_001",
+    "name": "Sarah Thompson",
+    "bank_accounts": [
+      {
+        "name": "Primary Checking",
+        "account_number": "9876543210",
+        "routing_number": "021000021",
+        "balance": "15234.50"
+      },
+      {
+        "name": "High Yield Savings",
+        "account_number": "1234567890",
+        "routing_number": "021000021",
+        "balance": "100000.00"
+      },
+      {
+        "name": "Money Market",
+        "account_number": "5555666677",
+        "routing_number": "021000021",
+        "balance": "250000.75"
+      }
+    ]
+  }
+}

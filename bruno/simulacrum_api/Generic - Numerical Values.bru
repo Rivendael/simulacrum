@@ -1,0 +1,19 @@
+meta {
+  name: Generic - Numerical Values
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{url}}/obscure
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "user_001",
+    "integer_value": 12345,
+    "float_value": 123.456
+  }
+}

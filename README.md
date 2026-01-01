@@ -1,86 +1,191 @@
 # Simulacrum
 
-A deterministic data obscuration API that transforms personal information into false identities using cryptographic hashing.
+Simulacrum is a high-performance Go service designed to anonymize and "obscure" sensitive data within JSON payloads. It replaces Personally Identifiable Information (PII) with realistic, deterministically generated fake data while preserving the original JSON structure and data types.
+
+This tool is ideal for developers and QA engineers who need to generate realistic test data from production datasets without exposing sensitive user information.
 
 ## Features
 
-- **Deterministic Obscuration**: Same input always produces the same fake identity
-- **Irreversible**: Uses SHA-256 hashing so original data cannot be recovered
-- **ID-based Seeding**: Uses customer ID as the randomization seed
-- **Comprehensive Coverage**: Obscures names, emails, addresses, and phone numbers
+*   **Smart Obfuscation**: Automatically detects and replaces sensitive fields such as:
+    *   Names (First, Last, Middle)
+    *   Emails & Phone Numbers
+    *   Addresses (Street, City, State, Zip, Country)
+    *   IDs (SSN, Passport, Driver's License, Tax ID)
+    *   Financial Data (Bank Accounts)
+*   **Deterministic Generation**: Uses consistent hashing to ensure that the same input value always produces the same obscured output. This is crucial for maintaining referential integrity across datasets.
+*   **High Performance**: Built on the [Gin](https://github.com/gin-gonic/gin) framework and uses [fastjson](https://github.com/valyala/fastjson) for efficient JSON processing.
+*   **Secure**:
+    *   **JWT Authentication**: Secures the API using JSON Web Tokens (RSA signed).
+    *   **TLS/mTLS Support**: Supports HTTPS and Mutual TLS for secure communication.
+*   **Configurable**: Flexible configuration via Environment Variables.
 
-## Project Structure
+## Getting Started
 
+### Prerequisites
+
+*   Go 1.22 or higher
+
+### Installation
+
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/yourusername/simulacrum.git
+    cd simulacrum
+    ```
+
+2.  Download dependencies:
+    ```bash
+    go mod download
+    ```
+
+3.  Build the executables:
+    ```bash
+    # Build the server
+    go build -o server cmd/server/main.go
+
+    # Build the utility tools
+    go build -o generate-keys cmd/generate-keys/generate_keys.go
+    go build -o generate-certs cmd/generate-certs/generate_certs.go
+    ```
+
+## Configuration
+
+Simulacrum is configured using Environment Variables.
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SERVER_PORT` | Port to listen on | `8080` |
+| `SERVER_ENVIRONMENT` | Environment name | `development` |
+| `GIN_MODE` | Gin framework mode (`debug`, `release`) | `debug` (or `release` if env is prod) |
+| `AUTH_PUBLIC_KEYS_FILE` | Path to public keys file | `public_keys.pem` |
+| `TLS_ENABLED` | Enable HTTPS (`true`/`false`) | `false` |
+| `TLS_CERT_FILE` | Path to server certificate | |
+| `TLS_KEY_FILE` | Path to server private key | |
+| `TLS_CA_CERT_FILE` | Path to CA certificate (for mTLS) | |
+| `TLS_REQUIRE_CLIENT_CERT` | Require mTLS (`true`/`false`) | `false` |
+
+## Docker
+
+Simulacrum includes a Dockerfile for easy deployment.
+
+### 1. Build the Image
+```bash
+docker build -t simulacrum .
 ```
-simulacrum/
-├── cmd/
-│   └── server/
-│       └── main.go           # Application entry point
-├── internal/
-│   ├── data/
-│   │   ├── data.go          # Core obscuration logic and PersonalData struct
-│   │   ├── data_test.go     # Data obscuration tests
-│   │   └── names.go         # Name lists for generation
-│   └── handlers/
-│       ├── handlers.go      # HTTP request handlers
-│       └── handlers_test.go # Handler tests
-├── go.mod
-├── go.sum
-└── README.md
+
+### 2. Run the Container
+You must mount the public keys file into the container.
+
+**Basic Usage:**
+```bash
+docker run -p 8080:8080 \
+  -v $(pwd)/public_keys.pem:/app/public_keys.pem \
+  simulacrum
 ```
 
-## Building
+**With Environment Variables:**
+```bash
+docker run -p 8080:8080 \
+  -v $(pwd)/public_keys.pem:/app/public_keys.pem \
+  -e SERVER_ENVIRONMENT=production \
+  -e GIN_MODE=release \
+  -e TLS_ENABLED=false \
+  simulacrum
+```
+
+**With Custom Config File:**
+```bash
+docker run -p 8080:8080 \
+  -v $(pwd)/public_keys.pem:/app/public_keys.pem \
+  -v $(pwd)/config.prod.yaml:/app/config.yaml \
+  simulacrum
+```
+
+## Usage
+
+### 1. Generate Keys & Certificates
+
+Before running the server, you need to generate the necessary keys for JWT authentication and optionally TLS certificates.
 
 ```bash
-go mod tidy
-go build -o simulacrum ./cmd/server
+# Generate JWT RSA keys (private key for signing tokens, public key for the server)
+./generate-keys
+
+# (Optional) Generate TLS certificates for HTTPS/mTLS
+./generate-certs
 ```
 
-## Running
+### 2. Run the Server
 
 ```bash
-./simulacrum
+./server -config config.dev.yaml
 ```
 
-The server will start on `:8080`.
+The server will start on the configured port (default `:8080`).
 
-## API
+### 3. API Endpoints
 
-### POST /obscure
-
-Takes personal data and returns obscured data with a deterministic false identity.
-
-**Request:**
-```json
-{
-  "id": "customer123",
-  "name": "John Doe",
-  "email": "john@example.com",
-  "address": "123 Main St",
-  "phone_number": "555-1234"
-}
-```
+#### `GET /health`
+Health check endpoint. No authentication required.
 
 **Response:**
 ```json
 {
-  "id": "customer123",
-  "name": "Sarah Anderson",
-  "email": "robert.williams@test.org",
-  "address": "4782 Oak Ave",
-  "phone_number": "555-284-6371"
+  "status": "ok"
 }
 ```
 
-## Testing
+#### `POST /obscure`
+The main endpoint to obscure data.
+*   **Headers**: `Authorization: Bearer <JWT_TOKEN>`
+*   **Body**: Arbitrary JSON object.
 
+**Example Request:**
+```bash
+curl -X POST http://localhost:8080/obscure \
+  -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "12345",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "address": {
+        "street": "123 Main St",
+        "city": "New York"
+    }
+  }'
+```
+
+**Example Response:**
+```json
+{
+  "id": "84921",
+  "name": "Alice Smith",
+  "email": "alice.smith@test.com",
+  "address": {
+      "street": "456 Elm St",
+      "city": "Los Angeles"
+  }
+}
+```
+
+## Development
+
+### Running Tests
 ```bash
 go test ./...
 ```
 
-All tests verify:
-- Deterministic behavior (same input → same output)
-- Proper obscuration (output ≠ input)
-- ID-based uniqueness (different IDs → different outputs)
-- Empty value preservation
-- API validation and error handling
+### Project Structure
+*   `cmd/`: Entry points for the server and utility tools.
+*   `internal/auth/`: JWT handling and middleware.
+*   `internal/config/`: Configuration loading logic.
+*   `internal/data/`: Data generation logic (names, addresses, etc.).
+*   `internal/handlers/`: HTTP request handlers.
+*   `bruno/`: API collection for [Bruno](https://www.usebruno.com/) (useful for testing).
+
+## License
+
+[MIT](LICENSE)

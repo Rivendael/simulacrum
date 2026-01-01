@@ -1,0 +1,53 @@
+meta {
+  name: Generic - All Known Fields
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{url}}/obscure
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "user_001",
+    "first_name": "John",
+    "last_name": "Smith",
+    "middle_name": "Michael",
+    "email": "john.smith@example.com",
+    "phone_number": "+1555-123-4567",
+    "address": "1234 Main Street",
+    "street": "Main Street",
+    "city": "Springfield",
+    "state": "IL",
+    "zip_code": "62701",
+    "county": "Sangamon",
+    "country": "USA",
+    "tax_id": "12-3456789",
+    "ssn": "123-45-6789",
+    "date_of_birth": "1985-03-15",
+    "gender": "Male",
+    "integer_value": 42,
+    "float_value": 3.14159,
+    "passport": {
+      "number": "AB1234567",
+      "country": "USA"
+    },
+    "driver_license": {
+      "number": "DL12345678",
+      "state": "IL"
+    },
+    "bank_accounts": [
+      {
+        "name": "Checking",
+        "amount": "5000.00"
+      },
+      {
+        "name": "Savings",
+        "amount": "50000.00"
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Generic - Documents (Passport and License)
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{url}}/obscure
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "doc_user_001",
+    "name": "Robert Williams",
+    "passport": {
+      "number": "CD9876543",
+      "issue_date": "2018-06-10",
+      "expiration_date": "2028-06-10",
+      "country": "USA"
+    },
+    "driver_license": {
+      "number": "CA123456789",
+      "state": "California",
+      "issue_date": "2016-03-22",
+      "expiration_date": "2026-03-22"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Generic - Mixed Known and Custom Fields
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{url}}/obscure
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "user_001",
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "organization": "Acme Corp",
+    "department": "Engineering",
+    "employee_id": "EMP-12345",
+    "phone_number": "555-987-6543",
+    "custom_metadata": {
+      "project": "Project Alpha",
+      "role": "Senior Engineer"
+    }
+  }
+}

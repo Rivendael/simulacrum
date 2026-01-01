@@ -1,0 +1,19 @@
+meta {
+  name: Generic - Determinism Test
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{url}}/obscure
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "determinism_test_001",
+    "email": "determinism@example.com",
+    "name": "Same Person Same Input"
+  }
+}
