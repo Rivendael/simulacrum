@@ -1938,7 +1938,7 @@ func TestObscureDataWithoutBankAccounts(t *testing.T) {
 
 	result := ObscureData(real)
 
-	if result.BankAccounts != nil && len(result.BankAccounts) > 0 {
+	if len(result.BankAccounts) > 0 {
 		t.Errorf("BankAccounts should be empty when not provided, got: %v", result.BankAccounts)
 	}
 }
@@ -1952,7 +1952,7 @@ func TestObscureDataEmptyBankAccounts(t *testing.T) {
 
 	result := ObscureData(real)
 
-	if result.BankAccounts != nil && len(result.BankAccounts) > 0 {
+	if len(result.BankAccounts) > 0 {
 		t.Errorf("BankAccounts should be empty, got: %v", result.BankAccounts)
 	}
 }

@@ -7,27 +7,6 @@ import (
 	"github.com/cespare/xxhash/v2"
 )
 
-type Passport struct {
-	Number         string `json:"number"`
-	IssueDate      string `json:"issue_date"`
-	ExpirationDate string `json:"expiration_date"`
-}
-
-type DriverLicense struct {
-	Number         string `json:"number"`
-	IssueDate      string `json:"issue_date"`
-	ExpirationDate string `json:"expiration_date"`
-}
-
-type BankAccount struct {
-	Name             string `json:"name"`
-	Amount           string `json:"amount,omitempty"`
-	AccountNumber    string `json:"account_number"`
-	Balance          string `json:"balance"`
-	CreditCardNumber string `json:"credit_card_number,omitempty"`
-	RoutingNumber    string `json:"routing_number"`
-}
-
 type PersonalData struct {
 	ID            string         `json:"id"`
 	Name          string         `json:"name,omitempty"`
@@ -58,100 +37,26 @@ type PersonalData struct {
 	Objects []*PersonalData `json:"objects,omitempty"`
 }
 
-// buildAddressString combines separate address fields into a single string for obscuration
-func buildAddressString(street, city, state, zipCode, county, country string) string {
-	parts := []string{}
-	if street != "" {
-		parts = append(parts, street)
-	}
-	if city != "" {
-		parts = append(parts, city)
-	}
-	if county != "" {
-		parts = append(parts, county)
-	}
-	if state != "" {
-		parts = append(parts, state)
-	}
-	if zipCode != "" {
-		parts = append(parts, zipCode)
-	}
-	if country != "" {
-		parts = append(parts, country)
-	}
-	return strings.Join(parts, " ")
-}
-
 // ObscureData takes the real data and returns a deterministic false identity
 func ObscureData(real PersonalData) PersonalData {
 	fake := PersonalData{
 		ID: real.ID,
 	}
 
-	// Handle name: check if combined name or separate fields are provided
-	if real.Name != "" {
-		fake.Name = GenerateDeterministicName(real.ID, real.Name)
-	} else if real.FirstName != "" || real.LastName != "" || real.MiddleName != "" {
-		// If separate name fields provided, only obscure the separate fields
-		fake.FirstName = GenerateDeterministicFirstName(real.ID, real.FirstName)
-		fake.LastName = GenerateDeterministicLastName(real.ID, real.LastName)
-		fake.MiddleName = GenerateDeterministicMiddleName(real.ID, real.MiddleName)
-	}
+	fake.Name, fake.FirstName, fake.LastName, fake.MiddleName = ObscureName(real.ID, real)
 
 	fake.Email = GenerateDeterministicEmail(real.ID, real.Email)
 
-	// Handle address: check if combined address or separate fields are provided
-	if real.Address != "" {
-		// If combined address provided, use it
-		fake.Address = GenerateDeterministicAddress(real.ID, real.Address)
-	} else if real.Street != "" || real.City != "" || real.State != "" || real.ZipCode != "" {
-		// If separate fields provided, only obscure the separate fields (don't generate combined address)
-		fake.Street = GenerateDeterministicStreet(real.ID, real.Street)
-		fake.City = GenerateDeterministicCity(real.ID, real.City)
-		fake.State = GenerateDeterministicState(real.ID, real.State)
-		fake.ZipCode = GenerateDeterministicZipCode(real.ID, real.ZipCode)
-	}
-
-	// Always handle county and country if provided
-	fake.County = GenerateDeterministicCounty(real.ID, real.County)
-	fake.Country = GenerateDeterministicCountry(real.ID, real.Country)
+	fake.Address, fake.Street, fake.City, fake.State, fake.ZipCode, fake.County, fake.Country = ObscureAddress(real.ID, real)
 
 	fake.PhoneNumber = GenerateDeterministicPhone(real.ID, real.PhoneNumber)
 	fake.TaxID = GenerateDeterministicTaxID(real.ID, real.TaxID)
 	fake.DateOfBirth = GenerateDeterministicDateOfBirth(real.ID, real.DateOfBirth)
 	fake.Gender = GenerateDeterministicGender(real.ID, real.Gender)
 	fake.SSN = GenerateDeterministicSSN(real.ID, real.SSN)
-	if real.Passport != nil {
-		fake.Passport = &Passport{
-			Number:         GenerateDeterministicPassportNumber(real.ID, real.Passport.Number),
-			IssueDate:      GenerateDeterministicDate(real.ID, "passport_issue", real.Passport.IssueDate),
-			ExpirationDate: GenerateDeterministicDate(real.ID, "passport_expiry", real.Passport.ExpirationDate),
-		}
-	}
-
-	// Handle DriverLicense if provided
-	if real.DriverLicense != nil {
-		fake.DriverLicense = &DriverLicense{
-			Number:         GenerateDeterministicDriverLicenseNumber(real.ID, real.DriverLicense.Number),
-			IssueDate:      GenerateDeterministicDate(real.ID, "license_issue", real.DriverLicense.IssueDate),
-			ExpirationDate: GenerateDeterministicDate(real.ID, "license_expiry", real.DriverLicense.ExpirationDate),
-		}
-	}
-
-	// Handle BankAccounts if provided
-	if len(real.BankAccounts) > 0 {
-		fake.BankAccounts = make([]*BankAccount, len(real.BankAccounts))
-		for i, account := range real.BankAccounts {
-			fake.BankAccounts[i] = &BankAccount{
-				Name:             GenerateDeterministicAccountName(real.ID, account.Name, i),
-				Amount:           GenerateDeterministicAmount(real.ID, account.Amount, i),
-				AccountNumber:    GenerateDeterministicAccountNumber(real.ID, account.AccountNumber, i),
-				Balance:          GenerateDeterministicBalance(real.ID, account.Balance, i),
-				CreditCardNumber: GenerateDeterministicCreditCardNumber(real.ID, account.CreditCardNumber, i),
-				RoutingNumber:    GenerateDeterministicRoutingNumber(real.ID, account.RoutingNumber, i),
-			}
-		}
-	}
+	fake.Passport = ObscurePassport(real.ID, real.Passport)
+	fake.DriverLicense = ObscureDriverLicense(real.ID, real.DriverLicense)
+	fake.BankAccounts = ObscureBankAccounts(real.ID, real.BankAccounts)
 
 	// Handle generic integer and float fields
 	if real.IntegerValue != 0 {
@@ -213,40 +118,6 @@ func bytesToInt(hash [8]byte, byteIndex int, max int) int {
 	return val
 }
 
-func GenerateDeterministicName(id, realName string) string {
-	if realName == "" {
-		return ""
-	}
-	hash := hashField(id, "name", realName)
-	first := selectFromList(hash, 0, FirstNames)
-	last := selectFromList(hash, 1, LastNames)
-	return fmt.Sprintf("%s %s", first, last)
-}
-
-func GenerateDeterministicFirstName(id, realFirstName string) string {
-	if realFirstName == "" {
-		return ""
-	}
-	hash := hashField(id, "firstname", realFirstName)
-	return selectFromList(hash, 0, FirstNames)
-}
-
-func GenerateDeterministicLastName(id, realLastName string) string {
-	if realLastName == "" {
-		return ""
-	}
-	hash := hashField(id, "lastname", realLastName)
-	return selectFromList(hash, 0, LastNames)
-}
-
-func GenerateDeterministicMiddleName(id, realMiddleName string) string {
-	if realMiddleName == "" {
-		return ""
-	}
-	hash := hashField(id, "middlename", realMiddleName)
-	return selectFromList(hash, 0, FirstNames)
-}
-
 func GenerateDeterministicEmail(id, realEmail string) string {
 	if realEmail == "" {
 		return ""
@@ -257,81 +128,6 @@ func GenerateDeterministicEmail(id, realEmail string) string {
 	domains := []string{"example.com", "test.org", "fake.net", "mail.com"}
 	domain := selectFromList(hash, 2, domains)
 	return fmt.Sprintf("%s.%s@%s", first, last, domain)
-}
-
-func GenerateDeterministicAddress(id, realAddress string) string {
-	if realAddress == "" {
-		return ""
-	}
-	hash := hashField(id, "address", realAddress)
-	// Select a region first to ensure consistency
-	region := AddressRegions[int(hash[0])%len(AddressRegions)]
-	number := bytesToInt(hash, 1, 9999)
-	street := selectFromList(hash, 2, StreetNames)
-	city := selectFromList(hash, 3, region.Cities)
-	state := selectFromList(hash, 4, region.States)
-	zipCode := bytesToInt(hash, 5, 99999)
-	return fmt.Sprintf("%d %s, %s, %s %05d", number, street, city, state, zipCode)
-}
-
-func GenerateDeterministicStreet(id, realStreet string) string {
-	if realStreet == "" {
-		return ""
-	}
-	hash := hashField(id, "street", realStreet)
-	number := bytesToInt(hash, 0, 9999)
-	street := selectFromList(hash, 2, StreetNames)
-	return fmt.Sprintf("%d %s", number, street)
-}
-
-func GenerateDeterministicCity(id, realCity string) string {
-	if realCity == "" {
-		return ""
-	}
-	hash := hashField(id, "city", realCity)
-	// Select a region first to ensure consistency
-	region := AddressRegions[int(hash[0])%len(AddressRegions)]
-	city := selectFromList(hash, 1, region.Cities)
-	return city
-}
-
-func GenerateDeterministicState(id, realState string) string {
-	if realState == "" {
-		return ""
-	}
-	hash := hashField(id, "state", realState)
-	// Select a region first to ensure consistency
-	region := AddressRegions[int(hash[0])%len(AddressRegions)]
-	state := selectFromList(hash, 1, region.States)
-	return state
-}
-
-func GenerateDeterministicZipCode(id, realZip string) string {
-	if realZip == "" {
-		return ""
-	}
-	hash := hashField(id, "zipcode", realZip)
-	zipCode := bytesToInt(hash, 0, 99999)
-	return fmt.Sprintf("%05d", zipCode)
-}
-
-func GenerateDeterministicCounty(id, realCounty string) string {
-	if realCounty == "" {
-		return ""
-	}
-	hash := hashField(id, "county", realCounty)
-	county := selectFromList(hash, 0, CityNames)
-	return county
-}
-
-func GenerateDeterministicCountry(id, realCountry string) string {
-	if realCountry == "" {
-		return ""
-	}
-	hash := hashField(id, "country", realCountry)
-	// Select a region and return its country for consistency
-	region := AddressRegions[int(hash[0])%len(AddressRegions)]
-	return region.Country
 }
 
 func GenerateDeterministicPhone(id, realPhone string) string {
@@ -381,43 +177,6 @@ func GenerateDeterministicTaxID(id, realTaxID string) string {
 	group := int(hash[2])%100 + 1
 	serial := (int(hash[3])<<8 | int(hash[4])) % 10000
 	return fmt.Sprintf("%03d-%02d-%04d", area, group, serial)
-}
-
-// GenerateDeterministicPassportNumber generates a deterministic passport number
-// Format: 2 letters + 7 digits (e.g., AB1234567)
-func GenerateDeterministicPassportNumber(id, realPassportNumber string) string {
-	if realPassportNumber == "" {
-		return ""
-	}
-	hash := hashField(id, "passport", realPassportNumber)
-
-	// First two characters (letters A-Z)
-	letter1 := 'A' + rune(hash[0]%26)
-	letter2 := 'A' + rune(hash[1]%26)
-
-	// Seven digits
-	digits := (int(hash[2])<<24 | int(hash[3])<<16 | int(hash[4])<<8 | int(hash[5])) % 10000000
-
-	return fmt.Sprintf("%c%c%07d", letter1, letter2, digits)
-}
-
-// GenerateDeterministicDriverLicenseNumber generates a deterministic driver's license number
-// Format: 3 letters + 6 digits (e.g., ABC123456)
-func GenerateDeterministicDriverLicenseNumber(id, realDriverLicenseNumber string) string {
-	if realDriverLicenseNumber == "" {
-		return ""
-	}
-	hash := hashField(id, "driverlicense", realDriverLicenseNumber)
-
-	// First three characters (letters A-Z)
-	letter1 := 'A' + rune(hash[0]%26)
-	letter2 := 'A' + rune(hash[1]%26)
-	letter3 := 'A' + rune(hash[2]%26)
-
-	// Six digits
-	digits := (int(hash[3])<<16 | int(hash[4])<<8 | int(hash[5])) % 1000000
-
-	return fmt.Sprintf("%c%c%c%06d", letter1, letter2, letter3, digits)
 }
 
 // GenerateDeterministicDate generates a deterministic date in YYYY-MM-DD format
@@ -499,142 +258,6 @@ func GenerateDeterministicSSN(id, realSSN string) string {
 	}
 
 	return fmt.Sprintf("%03d-%02d-%04d", areaNum, groupNum, serialNum)
-}
-
-// GenerateDeterministicAccountName generates a deterministic bank account name
-// Examples: "Checking Account", "Savings Account", "Money Market"
-func GenerateDeterministicAccountName(id, realName string, index int) string {
-	if realName == "" {
-		return ""
-	}
-	accountTypes := []string{
-		"Checking Account",
-		"Savings Account",
-		"Money Market Account",
-		"Deposit Account",
-		"Investment Account",
-		"Business Account",
-		"Interest-Bearing Account",
-		"Premium Savings",
-		"High-Yield Savings",
-		"Retirement Account",
-	}
-
-	fieldType := fmt.Sprintf("account_name_%d", index)
-	hash := hashField(id, fieldType, realName)
-	return selectFromList(hash, 0, accountTypes)
-}
-
-// GenerateDeterministicAmount generates a deterministic dollar amount
-// Returns amount as a string (e.g., "1234.56")
-func GenerateDeterministicAmount(id, realAmount string, index int) string {
-	if realAmount == "" {
-		return ""
-	}
-
-	fieldType := fmt.Sprintf("account_amount_%d", index)
-	hash := hashField(id, fieldType, realAmount)
-
-	// Generate realistic amounts: $100 to $999,999.99
-	// Use multiple bytes to create a larger number
-	cents := (int(hash[0])<<8 | int(hash[1])) % 100
-	dollars := (int(hash[2])<<16 | int(hash[3])<<8 | int(hash[4])) % 1000000
-	if dollars < 100 {
-		dollars += 100
-	}
-
-	return fmt.Sprintf("%.2f", float64(dollars)+float64(cents)/100.0)
-}
-
-// GenerateDeterministicAccountNumber generates a deterministic bank account number (10-12 digits)
-func GenerateDeterministicAccountNumber(id, realAccountNumber string, index int) string {
-	if realAccountNumber == "" {
-		return ""
-	}
-	fieldType := fmt.Sprintf("account_number_%d", index)
-	hash := hashField(id, fieldType, realAccountNumber)
-	// Generate 10-12 digit number
-	num := int(hash[0])<<24 | int(hash[1])<<16 | int(hash[2])<<8 | int(hash[3])
-	num = num % 900000000000
-	if num < 1000000000 {
-		num += 1000000000
-	}
-	return fmt.Sprintf("%d", num)
-}
-
-// GenerateDeterministicBalance generates a deterministic balance as a string (e.g., "12345.67")
-func GenerateDeterministicBalance(id, realBalance string, index int) string {
-	if realBalance == "" {
-		return ""
-	}
-	fieldType := fmt.Sprintf("balance_%d", index)
-	hash := hashField(id, fieldType, realBalance)
-	cents := (int(hash[0])<<8 | int(hash[1])) % 100
-	dollars := (int(hash[2])<<16 | int(hash[3])<<8 | int(hash[4])) % 1000000
-	if dollars < 100 {
-		dollars += 100
-	}
-	return fmt.Sprintf("%.2f", float64(dollars)+float64(cents)/100.0)
-}
-
-// GenerateDeterministicRoutingNumber generates a deterministic 9-digit routing number
-func GenerateDeterministicRoutingNumber(id, realRoutingNumber string, index int) string {
-	if realRoutingNumber == "" {
-		return ""
-	}
-	fieldType := fmt.Sprintf("routing_number_%d", index)
-	hash := hashField(id, fieldType, realRoutingNumber)
-	num := int(hash[0])<<16 | int(hash[1])<<8 | int(hash[2])
-	num = num % 900000000
-	if num < 100000000 {
-		num += 100000000
-	}
-	return fmt.Sprintf("%09d", num)
-}
-
-// GenerateDeterministicCreditCardNumber generates a deterministic credit card number
-// Uses Luhn algorithm to ensure validity
-func GenerateDeterministicCreditCardNumber(id, realCCNumber string, index int) string {
-	if realCCNumber == "" {
-		return ""
-	}
-
-	fieldType := fmt.Sprintf("credit_card_number_%d", index)
-	hash := hashField(id, fieldType, realCCNumber)
-
-	// Generate a 16-digit credit card number
-	ccNum := make([]int, 16)
-
-	// Set first digit to 4 (Visa) for simplicity
-	ccNum[0] = 4
-
-	// Fill in digits 1-14 using hash bytes
-	for i := 1; i < 15; i++ {
-		ccNum[i] = int(hash[i%8]) % 10
-	}
-
-	// Calculate Luhn check digit for the last digit
-	sum := 0
-	for i := range 15 {
-		digit := ccNum[14-i]
-		if i%2 == 0 {
-			digit *= 2
-			if digit > 9 {
-				digit -= 9
-			}
-		}
-		sum += digit
-	}
-	checkDigit := (10 - (sum % 10)) % 10
-	ccNum[15] = checkDigit
-
-	// Convert to string
-	var ccNumberStr strings.Builder
-	for _, digit := range ccNum {
-		fmt.Fprintf(&ccNumberStr, "%d", digit)
-	}
-
-	return ccNumberStr.String()
 }
 
 // GenerateDeterministicInteger generates a deterministic integer value
