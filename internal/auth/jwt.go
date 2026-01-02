@@ -76,7 +76,7 @@ func (pm *PublicKeyManager) ValidateToken(tokenString string) (jwt.MapClaims, er
 
 	// Try each public key
 	for _, pubKey := range pm.Keys {
-		token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (any, error) {
 			// Verify signing method is RSA
 			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])

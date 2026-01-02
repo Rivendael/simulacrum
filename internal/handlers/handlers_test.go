@@ -17,7 +17,7 @@ func TestHandleObscureGenericSingleField(t *testing.T) {
 	router := gin.New()
 	router.POST("/obscure", HandleObscure)
 
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"id":    "user123",
 		"name":  "John Doe",
 		"email": "john@example.com",
@@ -34,7 +34,7 @@ func TestHandleObscureGenericSingleField(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	json.Unmarshal(w.Body.Bytes(), &result)
 
 	if result["id"] != "user123" {
@@ -56,7 +56,7 @@ func TestHandleObscureGenericNestedObject(t *testing.T) {
 	router := gin.New()
 	router.POST("/obscure", HandleObscure)
 
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"id":     "user123",
 		"name":   "John Doe",
 		"street": "123 Main St",
@@ -74,7 +74,7 @@ func TestHandleObscureGenericNestedObject(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	json.Unmarshal(w.Body.Bytes(), &result)
 
 	// Street and city should be obscured
@@ -92,14 +92,14 @@ func TestHandleObscureGenericArray(t *testing.T) {
 	router := gin.New()
 	router.POST("/obscure", HandleObscure)
 
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"id": "user123",
-		"bank_accounts": []interface{}{
-			map[string]interface{}{
+		"bank_accounts": []any{
+			map[string]any{
 				"account_number": "1234567890",
 				"bank_name":      "Bank A",
 			},
-			map[string]interface{}{
+			map[string]any{
 				"account_number": "9876543210",
 				"bank_name":      "Bank B",
 			},
@@ -117,11 +117,11 @@ func TestHandleObscureGenericArray(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	json.Unmarshal(w.Body.Bytes(), &result)
 
 	// Bank accounts should be obscured as array
-	accounts, ok := result["bank_accounts"].([]interface{})
+	accounts, ok := result["bank_accounts"].([]any)
 	if !ok {
 		t.Errorf("Expected bank_accounts to be an array")
 	}
@@ -135,7 +135,7 @@ func TestHandleObscureGenericMixedStructure(t *testing.T) {
 	router := gin.New()
 	router.POST("/obscure", HandleObscure)
 
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"id":            "user123",
 		"first_name":    "John",
 		"last_name":     "Doe",
@@ -158,7 +158,7 @@ func TestHandleObscureGenericMixedStructure(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	json.Unmarshal(w.Body.Bytes(), &result)
 
 	// Custom field should pass through unchanged
@@ -181,7 +181,7 @@ func TestHandleObscureGenericDeterminism(t *testing.T) {
 	router := gin.New()
 	router.POST("/obscure", HandleObscure)
 
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"id":    "user123",
 		"email": "test@example.com",
 	}
@@ -193,7 +193,7 @@ func TestHandleObscureGenericDeterminism(t *testing.T) {
 	w1 := httptest.NewRecorder()
 	router.ServeHTTP(w1, req1)
 
-	var result1 map[string]interface{}
+	var result1 map[string]any
 	json.Unmarshal(w1.Body.Bytes(), &result1)
 
 	// Second call
@@ -202,7 +202,7 @@ func TestHandleObscureGenericDeterminism(t *testing.T) {
 	w2 := httptest.NewRecorder()
 	router.ServeHTTP(w2, req2)
 
-	var result2 map[string]interface{}
+	var result2 map[string]any
 	json.Unmarshal(w2.Body.Bytes(), &result2)
 
 	// Results should be identical (deterministic)
@@ -216,9 +216,9 @@ func TestHandleObscureGenericPassport(t *testing.T) {
 	router := gin.New()
 	router.POST("/obscure", HandleObscure)
 
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"id": "user123",
-		"passport": map[string]interface{}{
+		"passport": map[string]any{
 			"number":      "ABC123456",
 			"country":     "US",
 			"expiry_date": "2030-12-31",
@@ -236,10 +236,10 @@ func TestHandleObscureGenericPassport(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	json.Unmarshal(w.Body.Bytes(), &result)
 
-	passport, ok := result["passport"].(map[string]interface{})
+	passport, ok := result["passport"].(map[string]any)
 	if !ok {
 		t.Errorf("Expected passport to be an object")
 	}
@@ -255,14 +255,14 @@ func TestHandleObscureGenericArbitraryJSON(t *testing.T) {
 	router.POST("/obscure", HandleObscure)
 
 	// Arbitrary structure with any fields
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"id":    "user123",
 		"email": "user@example.com",
-		"custom_obj": map[string]interface{}{
+		"custom_obj": map[string]any{
 			"field1": "value1",
 			"field2": 123,
 		},
-		"tags": []interface{}{"tag1", "tag2", "tag3"},
+		"tags": []any{"tag1", "tag2", "tag3"},
 	}
 	body, _ := json.Marshal(reqBody)
 
@@ -276,7 +276,7 @@ func TestHandleObscureGenericArbitraryJSON(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	json.Unmarshal(w.Body.Bytes(), &result)
 
 	// Email should be obscured
@@ -285,7 +285,7 @@ func TestHandleObscureGenericArbitraryJSON(t *testing.T) {
 	}
 
 	// Custom object should pass through (no known fields)
-	if customObj, ok := result["custom_obj"].(map[string]interface{}); !ok {
+	if customObj, ok := result["custom_obj"].(map[string]any); !ok {
 		t.Errorf("Expected custom_obj to exist")
 	} else {
 		if val, ok := customObj["field1"].(string); !ok || val != "value1" {
@@ -294,7 +294,7 @@ func TestHandleObscureGenericArbitraryJSON(t *testing.T) {
 	}
 
 	// Tags array should pass through
-	if tags, ok := result["tags"].([]interface{}); !ok || len(tags) != 3 {
+	if tags, ok := result["tags"].([]any); !ok || len(tags) != 3 {
 		t.Errorf("Expected tags array to pass through")
 	}
 }
@@ -304,16 +304,16 @@ func TestParallelObscureDataSmallBatch(t *testing.T) {
 	router := gin.New()
 	router.POST("/obscure", HandleObscure)
 
-	people := make([]map[string]interface{}, 5)
+	people := make([]map[string]any, 5)
 	for i := 0; i < 5; i++ {
-		people[i] = map[string]interface{}{
+		people[i] = map[string]any{
 			"id":    fmt.Sprintf("user_%03d", i),
 			"name":  fmt.Sprintf("Person %d", i),
 			"email": fmt.Sprintf("user%d@example.com", i),
 		}
 	}
 
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"people": people,
 	}
 	body, _ := json.Marshal(reqBody)
@@ -328,10 +328,10 @@ func TestParallelObscureDataSmallBatch(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	json.Unmarshal(w.Body.Bytes(), &result)
 
-	peopleResult, ok := result["people"].([]interface{})
+	peopleResult, ok := result["people"].([]any)
 	if !ok || len(peopleResult) != 5 {
 		t.Errorf("Expected 5 people in response, got %d", len(peopleResult))
 	}
@@ -343,16 +343,16 @@ func TestParallelObscureLargeBatch(t *testing.T) {
 	router.POST("/obscure", HandleObscure)
 
 	// Test with 100 people to verify parallel processing
-	people := make([]map[string]interface{}, 100)
+	people := make([]map[string]any, 100)
 	for i := 0; i < 100; i++ {
-		people[i] = map[string]interface{}{
+		people[i] = map[string]any{
 			"id":    fmt.Sprintf("user_%03d", i),
 			"name":  fmt.Sprintf("Person %d", i),
 			"email": fmt.Sprintf("user%d@example.com", i),
 		}
 	}
 
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"people": people,
 	}
 	body, _ := json.Marshal(reqBody)
@@ -367,10 +367,10 @@ func TestParallelObscureLargeBatch(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	json.Unmarshal(w.Body.Bytes(), &result)
 
-	peopleResult, ok := result["people"].([]interface{})
+	peopleResult, ok := result["people"].([]any)
 	if !ok || len(peopleResult) != 100 {
 		t.Errorf("Expected 100 people in response, got %d", len(peopleResult))
 	}
@@ -378,16 +378,16 @@ func TestParallelObscureLargeBatch(t *testing.T) {
 
 func TestParallelObscureDataDeterminism(t *testing.T) {
 	// Verify that parallel processing produces deterministic results
-	people := make([]map[string]interface{}, 50)
+	people := make([]map[string]any, 50)
 	for i := 0; i < 50; i++ {
-		people[i] = map[string]interface{}{
+		people[i] = map[string]any{
 			"id":    fmt.Sprintf("user_%03d", i),
 			"name":  fmt.Sprintf("Person %d", i),
 			"email": fmt.Sprintf("user%d@example.com", i),
 		}
 	}
 
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"people": people,
 	}
 	body1, _ := json.Marshal(reqBody)
@@ -403,7 +403,7 @@ func TestParallelObscureDataDeterminism(t *testing.T) {
 	w1 := httptest.NewRecorder()
 	router.ServeHTTP(w1, req1)
 
-	var result1 map[string]interface{}
+	var result1 map[string]any
 	json.Unmarshal(w1.Body.Bytes(), &result1)
 
 	// Second request
@@ -412,7 +412,7 @@ func TestParallelObscureDataDeterminism(t *testing.T) {
 	w2 := httptest.NewRecorder()
 	router.ServeHTTP(w2, req2)
 
-	var result2 map[string]interface{}
+	var result2 map[string]any
 	json.Unmarshal(w2.Body.Bytes(), &result2)
 
 	// Results should be identical
@@ -429,7 +429,7 @@ func TestHandleObscurePhoneWithCountryCode(t *testing.T) {
 	router := gin.New()
 	router.POST("/obscure", HandleObscure)
 
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"id":           "user123",
 		"phone_number": "+1-555-987-6543",
 	}
@@ -445,7 +445,7 @@ func TestHandleObscurePhoneWithCountryCode(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	json.Unmarshal(w.Body.Bytes(), &result)
 
 	phone, ok := result["phone_number"].(string)
@@ -464,7 +464,7 @@ func TestHandleObscurePhoneWithoutCountryCode(t *testing.T) {
 	router := gin.New()
 	router.POST("/obscure", HandleObscure)
 
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"id":           "user123",
 		"phone_number": "555-987-6543",
 	}
@@ -476,7 +476,7 @@ func TestHandleObscurePhoneWithoutCountryCode(t *testing.T) {
 
 	router.ServeHTTP(w, req)
 
-	var result map[string]interface{}
+	var result map[string]any
 	json.Unmarshal(w.Body.Bytes(), &result)
 
 	phone, ok := result["phone_number"].(string)

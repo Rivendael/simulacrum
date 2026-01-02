@@ -192,7 +192,7 @@ func ObscureData(real PersonalData) PersonalData {
 func hashField(id, fieldType, value string) [8]byte {
 	h := xxhash.Sum64([]byte(id + ":" + fieldType + ":" + value))
 	var result [8]byte
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		result[i] = byte(h >> (8 * i))
 	}
 	return result
@@ -615,7 +615,7 @@ func GenerateDeterministicCreditCardNumber(id, realCCNumber string, index int) s
 
 	// Calculate Luhn check digit for the last digit
 	sum := 0
-	for i := 0; i < 15; i++ {
+	for i := range 15 {
 		digit := ccNum[14-i]
 		if i%2 == 0 {
 			digit *= 2
@@ -629,12 +629,12 @@ func GenerateDeterministicCreditCardNumber(id, realCCNumber string, index int) s
 	ccNum[15] = checkDigit
 
 	// Convert to string
-	ccNumberStr := ""
+	var ccNumberStr strings.Builder
 	for _, digit := range ccNum {
-		ccNumberStr += fmt.Sprintf("%d", digit)
+		fmt.Fprintf(&ccNumberStr, "%d", digit)
 	}
 
-	return ccNumberStr
+	return ccNumberStr.String()
 }
 
 // GenerateDeterministicInteger generates a deterministic integer value

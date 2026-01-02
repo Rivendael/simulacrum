@@ -32,13 +32,13 @@ func JWTMiddleware(pkm *PublicKeyManager) gin.HandlerFunc {
 }
 
 // GetClaims retrieves JWT claims from the context
-func GetClaims(c *gin.Context) (map[string]interface{}, bool) {
+func GetClaims(c *gin.Context) (map[string]any, bool) {
 	claims, exists := c.Get("jwt_claims")
 	if !exists {
 		return nil, false
 	}
 
-	claimsMap, ok := claims.(map[string]interface{})
+	claimsMap, ok := claims.(map[string]any)
 	return claimsMap, ok
 }
 

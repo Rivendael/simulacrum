@@ -54,17 +54,17 @@ func HandleObscure(c *gin.Context) {
 		return
 	}
 
-	// Convert fastjson Value to map[string]interface{}
+	// Convert fastjson Value to map[string]any
 	req := fastjsonToInterface(v)
 	result := obscureGeneric(req)
 	c.JSON(http.StatusOK, result)
 }
 
-// fastjsonToInterface converts a fastjson.Value to interface{}
-func fastjsonToInterface(v *fastjson.Value) interface{} {
+// fastjsonToInterface converts a fastjson.Value to any
+func fastjsonToInterface(v *fastjson.Value) any {
 	switch v.Type() {
 	case fastjson.TypeObject:
-		m := make(map[string]interface{})
+		m := make(map[string]any)
 		obj, _ := v.Object()
 		obj.Visit(func(key []byte, v *fastjson.Value) {
 			m[string(key)] = fastjsonToInterface(v)
@@ -72,7 +72,7 @@ func fastjsonToInterface(v *fastjson.Value) interface{} {
 		return m
 	case fastjson.TypeArray:
 		arr := v.GetArray()
-		result := make([]interface{}, len(arr))
+		result := make([]any, len(arr))
 		for i, item := range arr {
 			result[i] = fastjsonToInterface(item)
 		}
@@ -98,11 +98,11 @@ func fastjsonToInterface(v *fastjson.Value) interface{} {
 }
 
 // obscureGeneric recursively processes a generic structure and obscures known fields
-func obscureGeneric(input interface{}) interface{} {
+func obscureGeneric(input any) any {
 	switch v := input.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		return obscureMap(v)
-	case []interface{}:
+	case []any:
 		return obscureArray(v)
 	default:
 		return input
@@ -110,8 +110,8 @@ func obscureGeneric(input interface{}) interface{} {
 }
 
 // obscureMap processes a map and obscures known fields
-func obscureMap(m map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
+func obscureMap(m map[string]any) map[string]any {
+	result := make(map[string]any)
 
 	for key, value := range m {
 		if obscurableFields[key] {
@@ -126,8 +126,8 @@ func obscureMap(m map[string]interface{}) map[string]interface{} {
 }
 
 // obscureArray processes an array and obscures each element
-func obscureArray(arr []interface{}) []interface{} {
-	result := make([]interface{}, len(arr))
+func obscureArray(arr []any) []any {
+	result := make([]any, len(arr))
 	for i, item := range arr {
 		result[i] = obscureGeneric(item)
 	}
@@ -135,7 +135,7 @@ func obscureArray(arr []interface{}) []interface{} {
 }
 
 // obscureField applies field-specific obscuration logic
-func obscureField(fieldName string, value interface{}) interface{} {
+func obscureField(fieldName string, value any) any {
 	// Get the ID for deterministic hashing - we'll look for it in the parent context
 	// For now, use empty string as fallback (this will be improved when we have context)
 	id := ""
@@ -234,7 +234,7 @@ func obscureField(fieldName string, value interface{}) interface{} {
 }
 
 // Helper functions for type conversion
-func toInt64(v interface{}) (int64, bool) {
+func toInt64(v any) (int64, bool) {
 	switch val := v.(type) {
 	case float64:
 		return int64(val), true
@@ -247,7 +247,7 @@ func toInt64(v interface{}) (int64, bool) {
 	}
 }
 
-func toFloat64(v interface{}) (float64, bool) {
+func toFloat64(v any) (float64, bool) {
 	switch val := v.(type) {
 	case float64:
 		return val, true
@@ -261,9 +261,9 @@ func toFloat64(v interface{}) (float64, bool) {
 }
 
 // Helper function to obscure passport data
-func obscurePassport(value interface{}, id string) interface{} {
-	if m, ok := value.(map[string]interface{}); ok {
-		result := make(map[string]interface{})
+func obscurePassport(value any, id string) any {
+	if m, ok := value.(map[string]any); ok {
+		result := make(map[string]any)
 		for k, v := range m {
 			if str, ok := v.(string); ok {
 				result[k] = data.GenerateDeterministicPassportNumber(id+fmt.Sprintf("passport_%s_", k), str)
@@ -277,9 +277,9 @@ func obscurePassport(value interface{}, id string) interface{} {
 }
 
 // Helper function to obscure driver license data
-func obscureDriverLicense(value interface{}, id string) interface{} {
-	if m, ok := value.(map[string]interface{}); ok {
-		result := make(map[string]interface{})
+func obscureDriverLicense(value any, id string) any {
+	if m, ok := value.(map[string]any); ok {
+		result := make(map[string]any)
 		for k, v := range m {
 			if str, ok := v.(string); ok {
 				result[k] = data.GenerateDeterministicDriverLicenseNumber(id+fmt.Sprintf("license_%s_", k), str)
@@ -293,12 +293,12 @@ func obscureDriverLicense(value interface{}, id string) interface{} {
 }
 
 // Helper function to obscure bank accounts
-func obscureBankAccounts(value interface{}, id string) interface{} {
-	if arr, ok := value.([]interface{}); ok {
-		result := make([]interface{}, len(arr))
+func obscureBankAccounts(value any, id string) any {
+	if arr, ok := value.([]any); ok {
+		result := make([]any, len(arr))
 		for i, item := range arr {
-			if m, ok := item.(map[string]interface{}); ok {
-				obscured := make(map[string]interface{})
+			if m, ok := item.(map[string]any); ok {
+				obscured := make(map[string]any)
 				for k, v := range m {
 					if str, ok := v.(string); ok {
 						switch k {
