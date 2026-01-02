@@ -13,15 +13,17 @@ docker build \
   --build-arg CERT_FILE="$CERT_FILE" \
   --build-arg KEY_FILE="$KEY_FILE" \
   --build-arg CA_CERT_FILE="$CA_CERT_FILE" \
-  -t simulacrum .
+  --tag simulacrum \
+  .
 
 # Run with environment variables (no config file mount)
 # Files (keys, certs) are baked into the image via Dockerfile
 echo "Running Simulacrum with environment variables (Production + TLS)..."
-docker run --rm -p 8080:8080 \
-  -e SERVER_PORT=8080 \
-  -e SERVER_ENVIRONMENT=production \
-  -e GIN_MODE=release \
-  -e TLS_ENABLED=true \
-  -e TLS_REQUIRE_CLIENT_CERT=true \
+docker run --rm \
+  --publish 8080:8080 \
+  --env SERVER_PORT=8080 \
+  --env SERVER_ENVIRONMENT=production \
+  --env GIN_MODE=release \
+  --env TLS_ENABLED=true \
+  --env TLS_REQUIRE_CLIENT_CERT=true \
   simulacrum

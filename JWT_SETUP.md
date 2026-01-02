@@ -1,14 +1,32 @@
 # JWT Authentication Setup
 
-Your API now requires JWT tokens for the `/obscure` endpoint. Here's how to use it:
+Your API now requires JWT tokens for the `/obscure` endpoint. Here's how to use
+it:
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [1. Generate Test Keys & Tokens](#1-generate-test-keys--tokens)
+- [2. Start the Server](#2-start-the-server)
+- [3. Make API Requests](#3-make-api-requests)
+- [Architecture](#architecture)
+- [Token Claims](#token-claims)
+- [Multiple Public Keys (Key Rotation)](#multiple-public-keys-key-rotation)
+- [Creating Custom Tokens](#creating-custom-tokens)
+- [Error Responses](#error-responses)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## 1. Generate Test Keys & Tokens
 
 ```bash
-go run generate_test_keys.go
+go run \
+  generate_test_keys.go
 ```
 
 This creates:
+
 - `test_private.key` - Private key (keep secret, used to sign tokens)
 - `public_keys.pem` - Public key (given to server, used to verify tokens)
 - `test_token.txt` - A valid test token (24-hour expiration)
@@ -16,31 +34,41 @@ This creates:
 ## 2. Start the Server
 
 ```bash
-go run ./cmd/server -keys public_keys.pem -port 8080
+go run \
+  ./cmd/server \
+  -keys public_keys.pem \
+  -port 8080
 ```
 
 Or with custom options:
+
 ```bash
-go run ./cmd/server -keys my_keys.pem -port 3000
+go run \
+  ./cmd/server \
+  -keys my_keys.pem \
+  -port 3000
 ```
 
 ## 3. Make API Requests
 
 ### Health Check (No Auth Required)
+
 ```bash
 curl http://localhost:8080/health
 ```
 
 ### Obscure Data (Requires JWT)
+
 ```bash
 # Get the token from test_token.txt
 TOKEN=$(cat test_token.txt)
 
 # Make request with Bearer token
-curl -X POST http://localhost:8080/obscure \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
+curl --request POST \
+  http://localhost:8080/obscure \
+  --header "Authorization: Bearer $TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
     "id": "user123",
     "name": "John Doe",
     "email": "john@example.com",
@@ -63,6 +91,7 @@ curl -X POST http://localhost:8080/obscure \
 ## Token Claims
 
 Your test tokens include:
+
 ```json
 {
   "sub": "test-user",
@@ -73,6 +102,7 @@ Your test tokens include:
 ```
 
 Access claims in handlers:
+
 ```go
 claims := auth.GetClaims(c)
 user := auth.GetClaimString(c, "user")
@@ -92,8 +122,7 @@ The server will try each key until one validates the token.
 
 Use the private key to create custom tokens:
 
-```bash
-# In Go
+```go
 privateKey, _ := ioutil.ReadFile("test_private.key")
 // ... parse as RSA private key
 claims := jwt.MapClaims{
@@ -107,16 +136,19 @@ tokenString, _ := token.SignedString(privateKey)
 ## Error Responses
 
 **Missing Token:**
+
 ```json
 {"error": "missing authorization header"}
 ```
 
 **Invalid Token:**
+
 ```json
 {"error": "failed to validate token: ..."}
 ```
 
 **Expired Token:**
+
 ```json
 {"error": "failed to validate token: token is expired"}
 ```

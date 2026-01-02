@@ -3,7 +3,9 @@
 set -e
 
 echo "Building simulacrum..."
-go build -o simulacrum ./cmd/server
+go build \
+  -o simulacrum \
+  ./cmd/server
 
 echo "Starting server with environment variables..."
 export SERVER_PORT=8080
