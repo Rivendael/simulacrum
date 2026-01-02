@@ -301,7 +301,22 @@ func obscureBankAccounts(value interface{}, id string) interface{} {
 				obscured := make(map[string]interface{})
 				for k, v := range m {
 					if str, ok := v.(string); ok {
-						obscured[k] = data.GenerateDeterministicAccountName(id, str, i)
+						switch k {
+						case "name":
+							obscured[k] = data.GenerateDeterministicAccountName(id, str, i)
+						case "amount":
+							obscured[k] = data.GenerateDeterministicAmount(id, str, i)
+						case "account_number":
+							obscured[k] = data.GenerateDeterministicAccountNumber(id, str, i)
+						case "balance":
+							obscured[k] = data.GenerateDeterministicBalance(id, str, i)
+						case "credit_card_number":
+							obscured[k] = data.GenerateDeterministicCreditCardNumber(id, str, i)
+						case "routing_number":
+							obscured[k] = data.GenerateDeterministicRoutingNumber(id, str, i)
+						default:
+							obscured[k] = v
+						}
 					} else {
 						obscured[k] = v
 					}

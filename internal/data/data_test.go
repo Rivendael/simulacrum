@@ -2164,3 +2164,194 @@ func TestGenerateDeterministicPhoneEmpty(t *testing.T) {
 		t.Errorf("Expected empty string for empty input, got %s", result)
 	}
 }
+
+// Tests for GenerateDeterministicAccountNumber
+func TestGenerateDeterministicAccountNumber_Deterministic(t *testing.T) {
+	acctNum1 := GenerateDeterministicAccountNumber("user123", "1234567890", 0)
+	acctNum2 := GenerateDeterministicAccountNumber("user123", "1234567890", 0)
+	acctNum3 := GenerateDeterministicAccountNumber("user124", "1234567890", 0)
+
+	if acctNum1 != acctNum2 {
+		t.Errorf("Same ID and account number should produce same result: %s != %s", acctNum1, acctNum2)
+	}
+	if acctNum1 == acctNum3 {
+		t.Errorf("Different ID should produce different result: %s == %s", acctNum1, acctNum3)
+	}
+	if acctNum1 == "" || acctNum1 == "1234567890" {
+		t.Errorf("Account number should be obscured, got: %s", acctNum1)
+	}
+}
+
+func TestGenerateDeterministicAccountNumber_Format(t *testing.T) {
+	acctNum := GenerateDeterministicAccountNumber("user123", "1234567890", 0)
+	if len(acctNum) < 10 || len(acctNum) > 12 {
+		t.Errorf("Account number should be 10-12 digits, got: %s (length %d)", acctNum, len(acctNum))
+	}
+	for _, ch := range acctNum {
+		if ch < '0' || ch > '9' {
+			t.Errorf("Account number should contain only digits, got: %s", acctNum)
+			break
+		}
+	}
+}
+
+func TestGenerateDeterministicAccountNumber_Empty(t *testing.T) {
+	result := GenerateDeterministicAccountNumber("user123", "", 0)
+	if result != "" {
+		t.Errorf("Empty input should produce empty output, got: %s", result)
+	}
+}
+
+// Tests for GenerateDeterministicBalance
+func TestGenerateDeterministicBalance_Deterministic(t *testing.T) {
+	bal1 := GenerateDeterministicBalance("user123", "5000.00", 0)
+	bal2 := GenerateDeterministicBalance("user123", "5000.00", 0)
+	bal3 := GenerateDeterministicBalance("user124", "5000.00", 0)
+
+	if bal1 != bal2 {
+		t.Errorf("Same ID and balance should produce same result: %s != %s", bal1, bal2)
+	}
+	if bal1 == bal3 {
+		t.Errorf("Different ID should produce different result: %s == %s", bal1, bal3)
+	}
+	if bal1 == "" || bal1 == "5000.00" {
+		t.Errorf("Balance should be obscured, got: %s", bal1)
+	}
+}
+
+func TestGenerateDeterministicBalance_Format(t *testing.T) {
+	bal := GenerateDeterministicBalance("user123", "5000.00", 0)
+	parts := strings.Split(bal, ".")
+	if len(parts) != 2 {
+		t.Errorf("Balance should have decimal format, got: %s", bal)
+	}
+	if len(parts[1]) != 2 {
+		t.Errorf("Balance should have 2 decimal places, got: %s", bal)
+	}
+	for _, ch := range parts[0] {
+		if ch < '0' || ch > '9' {
+			t.Errorf("Balance should contain only digits before decimal, got: %s", bal)
+			break
+		}
+	}
+}
+
+func TestGenerateDeterministicBalance_Range(t *testing.T) {
+	bal := GenerateDeterministicBalance("user123", "5000.00", 0)
+	parts := strings.Split(bal, ".")
+	dollarStr := parts[0]
+
+	// Should be at least 100 dollars
+	if len(dollarStr) < 3 {
+		t.Errorf("Balance should be at least $100, got: %s", bal)
+	}
+}
+
+func TestGenerateDeterministicBalance_Empty(t *testing.T) {
+	result := GenerateDeterministicBalance("user123", "", 0)
+	if result != "" {
+		t.Errorf("Empty input should produce empty output, got: %s", result)
+	}
+}
+
+// Tests for GenerateDeterministicRoutingNumber
+func TestGenerateDeterministicRoutingNumber_Deterministic(t *testing.T) {
+	route1 := GenerateDeterministicRoutingNumber("user123", "021000021", 0)
+	route2 := GenerateDeterministicRoutingNumber("user123", "021000021", 0)
+	route3 := GenerateDeterministicRoutingNumber("user124", "021000021", 0)
+
+	if route1 != route2 {
+		t.Errorf("Same ID and routing number should produce same result: %s != %s", route1, route2)
+	}
+	if route1 == route3 {
+		t.Errorf("Different ID should produce different result: %s == %s", route1, route3)
+	}
+	if route1 == "" || route1 == "021000021" {
+		t.Errorf("Routing number should be obscured, got: %s", route1)
+	}
+}
+
+func TestGenerateDeterministicRoutingNumber_Format(t *testing.T) {
+	route := GenerateDeterministicRoutingNumber("user123", "021000021", 0)
+	if len(route) != 9 {
+		t.Errorf("Routing number should be exactly 9 digits, got: %s (length %d)", route, len(route))
+	}
+	for _, ch := range route {
+		if ch < '0' || ch > '9' {
+			t.Errorf("Routing number should contain only digits, got: %s", route)
+			break
+		}
+	}
+}
+
+func TestGenerateDeterministicRoutingNumber_Empty(t *testing.T) {
+	result := GenerateDeterministicRoutingNumber("user123", "", 0)
+	if result != "" {
+		t.Errorf("Empty input should produce empty output, got: %s", result)
+	}
+}
+
+// Tests for GenerateDeterministicCreditCardNumber
+func TestGenerateDeterministicCreditCardNumber_Deterministic(t *testing.T) {
+	cc1 := GenerateDeterministicCreditCardNumber("user123", "4111111111111111", 0)
+	cc2 := GenerateDeterministicCreditCardNumber("user123", "4111111111111111", 0)
+	cc3 := GenerateDeterministicCreditCardNumber("user124", "4111111111111111", 0)
+
+	if cc1 != cc2 {
+		t.Errorf("Same ID and CC should produce same result: %s != %s", cc1, cc2)
+	}
+	if cc1 == cc3 {
+		t.Errorf("Different ID should produce different result: %s == %s", cc1, cc3)
+	}
+	if cc1 == "" || cc1 == "4111111111111111" {
+		t.Errorf("Credit card number should be obscured, got: %s", cc1)
+	}
+}
+
+func TestGenerateDeterministicCreditCardNumber_Format(t *testing.T) {
+	cc := GenerateDeterministicCreditCardNumber("user123", "4111111111111111", 0)
+	if len(cc) != 16 {
+		t.Errorf("Credit card number should be 16 digits, got: %s", cc)
+	}
+	if cc[0] != '4' {
+		t.Errorf("Credit card number should start with 4 (Visa), got: %s", cc)
+	}
+	for i := 0; i < 16; i++ {
+		if cc[i] < '0' || cc[i] > '9' {
+			t.Errorf("Credit card number should contain only digits, got: %s", cc)
+			break
+		}
+	}
+}
+
+func TestGenerateDeterministicCreditCardNumber_LuhnValid(t *testing.T) {
+	cc := GenerateDeterministicCreditCardNumber("user123", "4111111111111111", 0)
+	if !isValidLuhn(cc) {
+		t.Errorf("Generated credit card number is not Luhn valid: %s", cc)
+	}
+}
+
+func TestGenerateDeterministicCreditCardNumber_Empty(t *testing.T) {
+	cc := GenerateDeterministicCreditCardNumber("user123", "", 0)
+	if cc != "" {
+		t.Errorf("Empty input should produce empty output, got: %s", cc)
+	}
+}
+
+// Helper function for Luhn validation
+func isValidLuhn(number string) bool {
+	sum := 0
+	double := false
+	for i := len(number) - 1; i >= 0; i-- {
+		digit := int(number[i] - '0')
+		if double {
+			digit *= 2
+			if digit > 9 {
+				digit -= 9
+			}
+		}
+		sum += digit
+		double = !double
+	}
+	return sum%10 == 0
+}

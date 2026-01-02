@@ -20,8 +20,12 @@ type DriverLicense struct {
 }
 
 type BankAccount struct {
-	Name   string `json:"name"`
-	Amount string `json:"amount"`
+	Name             string `json:"name"`
+	Amount           string `json:"amount,omitempty"`
+	AccountNumber    string `json:"account_number"`
+	Balance          string `json:"balance"`
+	CreditCardNumber string `json:"credit_card_number,omitempty"`
+	RoutingNumber    string `json:"routing_number"`
 }
 
 type PersonalData struct {
@@ -139,8 +143,12 @@ func ObscureData(real PersonalData) PersonalData {
 		fake.BankAccounts = make([]*BankAccount, len(real.BankAccounts))
 		for i, account := range real.BankAccounts {
 			fake.BankAccounts[i] = &BankAccount{
-				Name:   GenerateDeterministicAccountName(real.ID, account.Name, i),
-				Amount: GenerateDeterministicAmount(real.ID, account.Amount, i),
+				Name:             GenerateDeterministicAccountName(real.ID, account.Name, i),
+				Amount:           GenerateDeterministicAmount(real.ID, account.Amount, i),
+				AccountNumber:    GenerateDeterministicAccountNumber(real.ID, account.AccountNumber, i),
+				Balance:          GenerateDeterministicBalance(real.ID, account.Balance, i),
+				CreditCardNumber: GenerateDeterministicCreditCardNumber(real.ID, account.CreditCardNumber, i),
+				RoutingNumber:    GenerateDeterministicRoutingNumber(real.ID, account.RoutingNumber, i),
 			}
 		}
 	}
@@ -536,6 +544,97 @@ func GenerateDeterministicAmount(id, realAmount string, index int) string {
 	}
 
 	return fmt.Sprintf("%.2f", float64(dollars)+float64(cents)/100.0)
+}
+
+// GenerateDeterministicAccountNumber generates a deterministic bank account number (10-12 digits)
+func GenerateDeterministicAccountNumber(id, realAccountNumber string, index int) string {
+	if realAccountNumber == "" {
+		return ""
+	}
+	fieldType := fmt.Sprintf("account_number_%d", index)
+	hash := hashField(id, fieldType, realAccountNumber)
+	// Generate 10-12 digit number
+	num := int(hash[0])<<24 | int(hash[1])<<16 | int(hash[2])<<8 | int(hash[3])
+	num = num % 900000000000
+	if num < 1000000000 {
+		num += 1000000000
+	}
+	return fmt.Sprintf("%d", num)
+}
+
+// GenerateDeterministicBalance generates a deterministic balance as a string (e.g., "12345.67")
+func GenerateDeterministicBalance(id, realBalance string, index int) string {
+	if realBalance == "" {
+		return ""
+	}
+	fieldType := fmt.Sprintf("balance_%d", index)
+	hash := hashField(id, fieldType, realBalance)
+	cents := (int(hash[0])<<8 | int(hash[1])) % 100
+	dollars := (int(hash[2])<<16 | int(hash[3])<<8 | int(hash[4])) % 1000000
+	if dollars < 100 {
+		dollars += 100
+	}
+	return fmt.Sprintf("%.2f", float64(dollars)+float64(cents)/100.0)
+}
+
+// GenerateDeterministicRoutingNumber generates a deterministic 9-digit routing number
+func GenerateDeterministicRoutingNumber(id, realRoutingNumber string, index int) string {
+	if realRoutingNumber == "" {
+		return ""
+	}
+	fieldType := fmt.Sprintf("routing_number_%d", index)
+	hash := hashField(id, fieldType, realRoutingNumber)
+	num := int(hash[0])<<16 | int(hash[1])<<8 | int(hash[2])
+	num = num % 900000000
+	if num < 100000000 {
+		num += 100000000
+	}
+	return fmt.Sprintf("%09d", num)
+}
+
+// GenerateDeterministicCreditCardNumber generates a deterministic credit card number
+// Uses Luhn algorithm to ensure validity
+func GenerateDeterministicCreditCardNumber(id, realCCNumber string, index int) string {
+	if realCCNumber == "" {
+		return ""
+	}
+
+	fieldType := fmt.Sprintf("credit_card_number_%d", index)
+	hash := hashField(id, fieldType, realCCNumber)
+
+	// Generate a 16-digit credit card number
+	ccNum := make([]int, 16)
+
+	// Set first digit to 4 (Visa) for simplicity
+	ccNum[0] = 4
+
+	// Fill in digits 1-14 using hash bytes
+	for i := 1; i < 15; i++ {
+		ccNum[i] = int(hash[i%8]) % 10
+	}
+
+	// Calculate Luhn check digit for the last digit
+	sum := 0
+	for i := 0; i < 15; i++ {
+		digit := ccNum[14-i]
+		if i%2 == 0 {
+			digit *= 2
+			if digit > 9 {
+				digit -= 9
+			}
+		}
+		sum += digit
+	}
+	checkDigit := (10 - (sum % 10)) % 10
+	ccNum[15] = checkDigit
+
+	// Convert to string
+	ccNumberStr := ""
+	for _, digit := range ccNum {
+		ccNumberStr += fmt.Sprintf("%d", digit)
+	}
+
+	return ccNumberStr
 }
 
 // GenerateDeterministicInteger generates a deterministic integer value
